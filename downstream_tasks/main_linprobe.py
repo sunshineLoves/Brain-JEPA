@@ -19,7 +19,7 @@ from torch.utils.tensorboard import SummaryWriter
 
 import timm
 
-assert timm.__version__ == "0.3.2" # version check
+# assert timm.__version__ == "0.3.2" # version check
 from timm.models.layers import trunc_normal_
 
 import downstream_tasks.util.misc as misc
@@ -27,6 +27,7 @@ from downstream_tasks.util.misc import NativeScalerWithGradNormCount as NativeSc
 from downstream_tasks.util.lars import LARS
 
 from src.datasets.hca_sex_datasets import make_hca_sex
+from src.datasets.adni_dx_datasets import make_adni_dx
 
 from downstream_tasks.models_vit import VisionTransformer
 
@@ -52,9 +53,11 @@ def main(args):
     else:
         log_writer = None
     
-    if args.data_make_fn == 'hca_sex':
+    if args.data_make_fn == 'hca_sex' or args.data_make_fn == 'adni_dx':
         if args.data_make_fn == 'hca_sex':
             data_fn = make_hca_sex
+        elif args.data_make_fn == 'adni_dx':
+            data_fn = make_adni_dx
         else:
             raise "data function {} not implemented!"
         
@@ -62,11 +65,11 @@ def main(args):
             batch_size=args.batch_size,
             pin_mem=args.pin_mem,
             num_workers=args.num_workers,
-            world_size=1,
-            rank=0,
+            # world_size=1,
+            # rank=0,
             drop_last=False,
-            data_split=[0.6, 0.2, 0.2],
-            processed_dir=f'path/to/data',
+            # data_split=[0.6, 0.2, 0.2],
+            # processed_dir=f'path/to/data',
             use_normalization=args.use_normalization,
             label_normalization=args.label_normalization,
             downsample=args.downsample
