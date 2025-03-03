@@ -181,7 +181,7 @@ def evaluate(args, data_loader, model, device, task):
         predict_class = np.concatenate(predict_class_all, axis=0)
         predict = np.argmax(predict_class, axis=1)
         
-        f1 = f1_score(gt, predict, average="micro")
+        f1 = f1_score(gt, predict)
         metric_logger.update(f1=f1.item())
         
         print('* Acc@1 {top1.global_avg:.3f} loss {losses.global_avg:.3f} F1 {f1.global_avg:.3f}'
