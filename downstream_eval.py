@@ -76,6 +76,8 @@ def get_args_parser():
     parser.add_argument('--output_root', type=str, default='',
                         help='load_dataset')
     
+    parser.add_argument('--device', type=str, default='cuda', help='device')
+    parser.add_argument('--processed_dir', type=str, required=True, help='processed_dir')
     return parser
 
 

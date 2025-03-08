@@ -21,4 +21,6 @@ python downstream_eval.py \
     --pred_emb_dim 384 \
     --attn_mode flash_attn \
     --add_w mapping \
-    --downsample 
+    --downsample \
+    --device cuda \
+    --processed_dir data/processed/adni_pt_dataset/fmriprep_dx_full_bold.pth

@@ -2,13 +2,14 @@ import os
 import random
 from logging import getLogger
 
+import numpy as np
 import torch
-from torch.utils import data
+from torch.utils.data import Dataset, Subset, DataLoader
 
 logger = getLogger()
 
 
-class ADNI_DX_scale(data.Dataset):
+class ADNI_DX_scale(Dataset):
     def __init__(
         self, 
         split='',
@@ -27,13 +28,16 @@ class ADNI_DX_scale(data.Dataset):
         self.n_rois = 450
         self.seq_length = 490
         self.root_dir = ''
-        os.makedirs(processed_dir, exist_ok=True)
+        # os.makedirs(processed_dir, exist_ok=True)
         
-        self.input_x_file = os.path.join(processed_dir, 'adni160_{}_x.pt'.format(split))
-        self.label_y_file = os.path.join(processed_dir, 'adni160_{}_y.pt'.format(split))
+        npz_data = np.load(processed_dir)
         
-        self.input_xs = torch.load(self.input_x_file)
-        self.label_ys = torch.load(self.label_y_file)
+        # self.input_xs = torch.tensor(npz_data["X"]).transpose(1, 2)
+        # self.label_ys = torch.tensor(npz_data["Y"])
+
+        ckp = torch.load(processed_dir)
+        self.input_xs = ckp[split]['X']
+        self.label_ys = 1 - ckp[split]['Y']
             
     def __len__(self):
         return len(self.input_xs)
@@ -113,7 +117,7 @@ def make_adni_dx(
     pin_mem=True,
     num_workers=8,
     drop_last=True,
-    processed_dir='src/datasets/processed/adni',
+    processed_dir='data/processed/label2/preproc-fmriprep_label-DX_desc-filtered_bold.npz',
     use_normalization=False,
     label_normalization=False,
     downsample=False,
@@ -167,6 +171,45 @@ def make_adni_dx(
         pin_memory=pin_mem,
         num_workers=num_workers,
         persistent_workers=False)
+    
+    # dataset = ADNI_DX_scale(
+    #     processed_dir=processed_dir,
+    #     use_normalization=use_normalization,
+    #     downsample=downsample
+    # )
+
+    # train_size = int(0.6 * len(dataset))
+    # valid_size = int(0.2 * len(dataset))
+    # test_size = len(dataset) - train_size - valid_size
+    
+    # train_dataset = Subset(dataset, range(0, train_size))
+    # valid_dataset = Subset(dataset, range(train_size, train_size + valid_size))
+    # test_dataset = Subset(dataset, range(train_size + valid_size, train_size + valid_size + test_size))
+
+    # train_data_loader = DataLoader(
+    #     train_dataset,
+    #     collate_fn=collator,
+    #     batch_size=batch_size,
+    #     drop_last=drop_last,
+    #     pin_memory=pin_mem,
+    #     num_workers=num_workers,
+    #     persistent_workers=False)
+    # valid_data_loader = DataLoader(
+    #     valid_dataset,
+    #     collate_fn=collator,
+    #     batch_size=batch_size,
+    #     drop_last=drop_last,
+    #     pin_memory=pin_mem,
+    #     num_workers=num_workers,
+    #     persistent_workers=False)
+    # test_data_loader = DataLoader(
+    #     test_dataset,
+    #     collate_fn=collator,
+    #     batch_size=batch_size,
+    #     drop_last=drop_last,
+    #     pin_memory=pin_mem,
+    #     num_workers=num_workers,
+    #     persistent_workers=False)
     
     logger.info('adni_dx dataset created')
 
