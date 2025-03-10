@@ -30,6 +30,7 @@ from src.datasets.adni_dx_datasets import make_adni_dx
 from downstream_tasks.models_vit import VisionTransformer
 from downstream_tasks.engine_finetune import train_one_epoch, evaluate
 
+import random
 
 def main(args):
 
@@ -40,7 +41,10 @@ def main(args):
 
     # fix the seed for reproducibility
     seed = args.seed
+    random.seed(seed)
     torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
 
     cudnn.benchmark = True

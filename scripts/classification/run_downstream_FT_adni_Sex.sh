@@ -6,8 +6,8 @@ python downstream_eval.py \
     --num_seed 5 \
     --load_epoch 300 \
     --epochs 50 \
-    --blr 0.001 \
-    --min_lr 0.000001 \
+    --blr 0.00001 \
+    --min_lr 0.00000005 \
     --smoothing 0.0 \
     --config configs/downstream/fine_tune.yaml \
     --output_root './output_dir' \
@@ -23,4 +23,4 @@ python downstream_eval.py \
     --add_w mapping \
     --downsample \
     --device cuda \
-    --processed_dir data/processed/adni_pt_dataset/fmriprep_dx_full_bold.pth
+    --processed_dir data/processed/adni/preproc-fmriprep_label-Sex_desc-full_bold.npz
