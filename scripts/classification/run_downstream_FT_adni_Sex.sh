@@ -6,7 +6,7 @@ python downstream_eval.py \
     --num_seed 5 \
     --load_epoch 300 \
     --epochs 50 \
-    --blr 0.00001 \
+    --blr 0.00002 \
     --min_lr 0.00000005 \
     --smoothing 0.0 \
     --config configs/downstream/fine_tune.yaml \

@@ -5,6 +5,7 @@ from logging import getLogger
 import numpy as np
 import torch
 from torch.utils.data import Dataset, Subset, DataLoader
+from sklearn.model_selection import StratifiedShuffleSplit
 
 logger = getLogger()
 
@@ -30,14 +31,14 @@ class ADNI_DX_scale(Dataset):
         self.root_dir = ''
         # os.makedirs(processed_dir, exist_ok=True)
         
-        npz_data = np.load(processed_dir)
+        self.npz_data = np.load(processed_dir)
         
-        # self.input_xs = torch.tensor(npz_data["X"]).transpose(1, 2)
-        # self.label_ys = torch.tensor(npz_data["Y"])
+        self.input_xs = torch.tensor(self.npz_data["X"], dtype=torch.float32).transpose(1, 2)
+        self.label_ys = torch.tensor(self.npz_data["Y"], dtype=torch.float32)
 
-        ckp = torch.load(processed_dir)
-        self.input_xs = ckp[split]['X']
-        self.label_ys = 1 - ckp[split]['Y']
+        # ckp = torch.load(processed_dir)
+        # self.input_xs = ckp[split]['X']
+        # self.label_ys = 1 - ckp[split]['Y']
             
     def __len__(self):
         return len(self.input_xs)
@@ -117,20 +118,34 @@ def make_adni_dx(
     pin_mem=True,
     num_workers=8,
     drop_last=True,
-    processed_dir='data/processed/label2/preproc-fmriprep_label-DX_desc-filtered_bold.npz',
+    processed_dir='',
     use_normalization=False,
     label_normalization=False,
     downsample=False,
-):
-    # train data loader
-    train_dataset = ADNI_DX_scale(
-        split='train', 
+):    
+    dataset = ADNI_DX_scale(
         processed_dir=processed_dir,
         use_normalization=use_normalization,
         downsample=downsample
     )
-    
-    train_data_loader = torch.utils.data.DataLoader(
+
+    indices = np.arange(len(dataset))
+    labels = np.array([dataset[i][1] for i in indices])  # 获取所有的标签
+
+    # 先按 8:2 划分 train 和 (val + test)
+    sss1 = StratifiedShuffleSplit(n_splits=1, test_size=0.4, random_state=42)
+    train_idx, valid_test_idx = next(sss1.split(indices, labels))
+
+    # 再按 2:2 划分 val 和 test
+    sss2 = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=42)
+    valid_idx, test_idx = next(sss2.split(valid_test_idx, labels[valid_test_idx]))
+
+    # 创建子数据集
+    train_dataset = Subset(dataset, train_idx)
+    valid_dataset = Subset(dataset, valid_idx)
+    test_dataset = Subset(dataset, test_idx)
+
+    train_data_loader = DataLoader(
         train_dataset,
         collate_fn=collator,
         batch_size=batch_size,
@@ -138,16 +153,7 @@ def make_adni_dx(
         pin_memory=pin_mem,
         num_workers=num_workers,
         persistent_workers=False)
-
-    # validation data loader
-    valid_dataset = ADNI_DX_scale(
-        split='valid',
-        processed_dir=processed_dir,
-        use_normalization=use_normalization,
-        downsample=downsample
-    )
-    
-    valid_data_loader = torch.utils.data.DataLoader(
+    valid_data_loader = DataLoader(
         valid_dataset,
         collate_fn=collator,
         batch_size=batch_size,
@@ -155,15 +161,7 @@ def make_adni_dx(
         pin_memory=pin_mem,
         num_workers=num_workers,
         persistent_workers=False)
-
-    # test data loader
-    test_dataset = ADNI_DX_scale(
-        split='test',
-        processed_dir=processed_dir,
-        use_normalization=use_normalization,
-        downsample=downsample)
-    
-    test_data_loader = torch.utils.data.DataLoader(
+    test_data_loader = DataLoader(
         test_dataset,
         collate_fn=collator,
         batch_size=batch_size,
@@ -171,45 +169,6 @@ def make_adni_dx(
         pin_memory=pin_mem,
         num_workers=num_workers,
         persistent_workers=False)
-    
-    # dataset = ADNI_DX_scale(
-    #     processed_dir=processed_dir,
-    #     use_normalization=use_normalization,
-    #     downsample=downsample
-    # )
-
-    # train_size = int(0.6 * len(dataset))
-    # valid_size = int(0.2 * len(dataset))
-    # test_size = len(dataset) - train_size - valid_size
-    
-    # train_dataset = Subset(dataset, range(0, train_size))
-    # valid_dataset = Subset(dataset, range(train_size, train_size + valid_size))
-    # test_dataset = Subset(dataset, range(train_size + valid_size, train_size + valid_size + test_size))
-
-    # train_data_loader = DataLoader(
-    #     train_dataset,
-    #     collate_fn=collator,
-    #     batch_size=batch_size,
-    #     drop_last=drop_last,
-    #     pin_memory=pin_mem,
-    #     num_workers=num_workers,
-    #     persistent_workers=False)
-    # valid_data_loader = DataLoader(
-    #     valid_dataset,
-    #     collate_fn=collator,
-    #     batch_size=batch_size,
-    #     drop_last=drop_last,
-    #     pin_memory=pin_mem,
-    #     num_workers=num_workers,
-    #     persistent_workers=False)
-    # test_data_loader = DataLoader(
-    #     test_dataset,
-    #     collate_fn=collator,
-    #     batch_size=batch_size,
-    #     drop_last=drop_last,
-    #     pin_memory=pin_mem,
-    #     num_workers=num_workers,
-    #     persistent_workers=False)
     
     logger.info('adni_dx dataset created')
 

@@ -6,7 +6,7 @@ python downstream_eval.py \
     --num_seed 5 \
     --load_epoch 300 \
     --epochs 50 \
-    --blr 0.00001 \
+    --blr 0.00005 \
     --min_lr 0.00000005 \
     --smoothing 0.0 \
     --config configs/downstream/fine_tune.yaml \
@@ -22,5 +22,5 @@ python downstream_eval.py \
     --attn_mode flash_attn \
     --add_w mapping \
     --downsample \
-    --device cuda \
+    --device cuda:1 \
     --processed_dir data/processed/adni/preproc-fmriprep_label-MCI_desc-full_bold.npz

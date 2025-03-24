@@ -9,7 +9,7 @@ import sys
 from typing import Iterable
 from scipy.stats import pearsonr
 import numpy as np
-from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score, confusion_matrix
+from sklearn.metrics import f1_score, roc_auc_score
 
 import torch
 import torch.nn.functional as F
@@ -182,10 +182,12 @@ def evaluate(args, data_loader, model, device, task):
         predict = np.argmax(predict_class, axis=1)
         
         f1 = f1_score(gt, predict)
+        auroc = roc_auc_score(gt, predict_class[:, 1])
         metric_logger.update(f1=f1.item())
+        metric_logger.update(auroc=auroc.item())
         
-        print('* Acc@1 {top1.global_avg:.3f} loss {losses.global_avg:.3f} F1 {f1.global_avg:.3f}'
-            .format(top1=metric_logger.acc1, losses=metric_logger.loss, f1=metric_logger.f1))
+        print('* Acc@1 {top1.global_avg:.3f} loss {losses.global_avg:.3f} F1 {f1.global_avg:.3f} AUROC {auroc.global_avg:.3f}'
+            .format(top1=metric_logger.acc1, losses=metric_logger.loss, f1=metric_logger.f1, auroc=metric_logger.auroc))
     else:
         target = torch.from_numpy(np.concatenate(gt_all))
         output = torch.from_numpy(np.concatenate(predict_class_all, axis=0)).float()

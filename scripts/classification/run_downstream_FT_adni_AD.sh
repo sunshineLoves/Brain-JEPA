@@ -5,8 +5,8 @@ python downstream_eval.py \
     --nb_classes 2 \
     --num_seed 5 \
     --load_epoch 300 \
-    --epochs 50 \
-    --blr 0.00001 \
+    --epochs 200 \
+    --blr 0.00005 \
     --min_lr 0.00000005 \
     --smoothing 0.0 \
     --config configs/downstream/fine_tune.yaml \
@@ -22,5 +22,6 @@ python downstream_eval.py \
     --attn_mode flash_attn \
     --add_w mapping \
     --downsample \
-    --device cuda \
-    --processed_dir data/processed/adni/preproc-fmriprep_label-AD_desc-full_bold.npz
+    --device cuda:1 \
+    --processed_dir \
+    data/processed/adni/ALL/preproc-fmriprep_label-AD_desc-filtered_bold.npz

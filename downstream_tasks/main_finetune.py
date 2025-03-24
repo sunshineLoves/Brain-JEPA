@@ -42,10 +42,10 @@ def main(args):
     # fix the seed for reproducibility
     seed = args.seed
     random.seed(seed)
+    np.random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
-    np.random.seed(seed)
 
     cudnn.benchmark = True
     
@@ -179,7 +179,7 @@ def main(args):
         if args.output_dir:
             misc.save_model(
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
-                loss_scaler=loss_scaler, epoch=epoch)
+                loss_scaler=loss_scaler, epoch=epoch, tag="latest")
 
         val_stats = evaluate(args, data_loader_val, model, device, args.task)
         if args.task == 'classification':
@@ -193,11 +193,25 @@ def main(args):
         else:
             print(f"MSE of the network on the {len(test_dataset)} test samples: {test_stats['loss']:.3f}, R2: {test_stats['r2']:.3f}")
         
-        
+        if test_stats["acc1"] > max_test_accuracy:
+            max_test_accuracy = test_stats["acc1"]
+            if args.output_dir:
+                misc.save_model(
+                    args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
+                    loss_scaler=loss_scaler, epoch=epoch, tag='best_acc'
+                )
+
         if log_writer is not None:
             if args.task == 'classification':
+                log_writer.add_scalar('perf/valid_acc1', val_stats['acc1'], epoch)
+                log_writer.add_scalar('perf/valid_loss', val_stats['loss'], epoch)
+                log_writer.add_scalar('perf/valid_auroc', val_stats['auroc'], epoch)
+                log_writer.add_scalar('perf/valid_f1', val_stats['f1'], epoch)
+
                 log_writer.add_scalar('perf/test_acc1', test_stats['acc1'], epoch)
                 log_writer.add_scalar('perf/test_loss', test_stats['loss'], epoch)
+                log_writer.add_scalar('perf/test_auroc', test_stats['auroc'], epoch)
+                log_writer.add_scalar('perf/test_f1', test_stats['f1'], epoch)
             else:
                 log_writer.add_scalar('perf/test_mse', test_stats['loss'], epoch)
 
