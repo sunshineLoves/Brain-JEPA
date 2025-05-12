@@ -181,13 +181,13 @@ def main(args):
                 args=args, model=model, model_without_ddp=model_without_ddp, optimizer=optimizer,
                 loss_scaler=loss_scaler, epoch=epoch, tag="latest")
 
-        val_stats = evaluate(args, data_loader_val, model, device, args.task)
+        val_stats = evaluate(args, data_loader_val, model, device, args.task, "Valid:")
         if args.task == 'classification':
             print(f"Accuracy of the network on the {len(valid_dataset)} validation samples: {val_stats['acc1']:.1f}%")
         else:
             print(f"MSE of the network on the {len(valid_dataset)} validation samples: {val_stats['loss']:.3f}, R2: {val_stats['r2']:.3f}")
             
-        test_stats = evaluate(args, data_loader_test, model, device, args.task)
+        test_stats = evaluate(args, data_loader_test, model, device, args.task, "Test:")
         if args.task == 'classification':
             print(f"Accuracy of the network on the {len(test_dataset)} test samples: {test_stats['acc1']:.1f}%")
         else:
@@ -207,11 +207,15 @@ def main(args):
                 log_writer.add_scalar('perf/valid_loss', val_stats['loss'], epoch)
                 log_writer.add_scalar('perf/valid_auroc', val_stats['auroc'], epoch)
                 log_writer.add_scalar('perf/valid_f1', val_stats['f1'], epoch)
+                log_writer.add_scalar('perf/valid_sen', val_stats['sen'], epoch)
+                log_writer.add_scalar('perf/valid_spe', val_stats['spe'], epoch)
 
                 log_writer.add_scalar('perf/test_acc1', test_stats['acc1'], epoch)
                 log_writer.add_scalar('perf/test_loss', test_stats['loss'], epoch)
                 log_writer.add_scalar('perf/test_auroc', test_stats['auroc'], epoch)
                 log_writer.add_scalar('perf/test_f1', test_stats['f1'], epoch)
+                log_writer.add_scalar('perf/test_sen', test_stats['sen'], epoch)
+                log_writer.add_scalar('perf/test_spe', test_stats['spe'], epoch)
             else:
                 log_writer.add_scalar('perf/test_mse', test_stats['loss'], epoch)
 

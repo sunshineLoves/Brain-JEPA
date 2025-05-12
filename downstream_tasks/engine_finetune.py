@@ -9,7 +9,7 @@ import sys
 from typing import Iterable
 from scipy.stats import pearsonr
 import numpy as np
-from sklearn.metrics import f1_score, roc_auc_score
+from sklearn.metrics import f1_score, roc_auc_score, recall_score
 
 import torch
 import torch.nn.functional as F
@@ -109,14 +109,14 @@ def train_one_epoch(model: torch.nn.Module, criterion: torch.nn.Module,
 
 
 @torch.no_grad()
-def evaluate(args, data_loader, model, device, task):
+def evaluate(args, data_loader, model, device, task, header):
     if task == 'classification':
         criterion = torch.nn.CrossEntropyLoss()
     else:
         criterion = torch.nn.MSELoss()
 
     metric_logger = misc.MetricLogger(delimiter="  ")
-    header = 'Test:'
+    # header = 'Test:'
 
     # switch to evaluation mode
     model.eval()
@@ -183,11 +183,16 @@ def evaluate(args, data_loader, model, device, task):
         
         f1 = f1_score(gt, predict)
         auroc = roc_auc_score(gt, predict_class[:, 1])
+        sen = recall_score(gt, predict, pos_label=1, zero_division=0)
+        spe = recall_score(gt, predict, pos_label=0, zero_division=0)
+
         metric_logger.update(f1=f1.item())
         metric_logger.update(auroc=auroc.item())
+        metric_logger.update(sen=sen.item())
+        metric_logger.update(spe=spe.item())
         
-        print('* Acc@1 {top1.global_avg:.3f} loss {losses.global_avg:.3f} F1 {f1.global_avg:.3f} AUROC {auroc.global_avg:.3f}'
-            .format(top1=metric_logger.acc1, losses=metric_logger.loss, f1=metric_logger.f1, auroc=metric_logger.auroc))
+        print('* Acc@1 {top1.global_avg:.3f} loss {losses.global_avg:.3f} F1 {f1.global_avg:.3f} AUROC {auroc.global_avg:.3f} SEN {sen.global_avg:.3f} SPE {spe.global_avg:.3f}'
+            .format(top1=metric_logger.acc1, losses=metric_logger.loss, f1=metric_logger.f1, auroc=metric_logger.auroc, sen=metric_logger.sen, spe=metric_logger.spe))
     else:
         target = torch.from_numpy(np.concatenate(gt_all))
         output = torch.from_numpy(np.concatenate(predict_class_all, axis=0)).float()

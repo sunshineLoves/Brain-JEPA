@@ -139,11 +139,19 @@ def make_adni_dx(
     # 再按 2:2 划分 val 和 test
     sss2 = StratifiedShuffleSplit(n_splits=1, test_size=0.5, random_state=42)
     valid_idx, test_idx = next(sss2.split(valid_test_idx, labels[valid_test_idx]))
+    valid_idx, test_idx = valid_test_idx[valid_idx], valid_test_idx[test_idx]
 
     # 创建子数据集
     train_dataset = Subset(dataset, train_idx)
     valid_dataset = Subset(dataset, valid_idx)
     test_dataset = Subset(dataset, test_idx)
+
+    print(f'len train dataset: {len(train_dataset)}')
+    print(f"train dataset label: {np.unique(labels[train_idx], return_counts=True)}")
+    print(f'len validation dataset: {len(valid_dataset)}')
+    print(f"validation dataset label: {np.unique(labels[valid_idx], return_counts=True)}")
+    print(f'len test dataset: {len(test_dataset)}')
+    print(f"test dataset label: {np.unique(labels[test_idx], return_counts=True)}")
 
     train_data_loader = DataLoader(
         train_dataset,
